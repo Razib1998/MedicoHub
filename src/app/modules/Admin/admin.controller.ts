@@ -1,10 +1,18 @@
 import { Request, Response } from "express";
 import { AdminServices } from "./admin.service";
+import pick from "../../pick";
 
 const getAllAdminFromDB = async (req: Request, res: Response) => {
   try {
-    console.log(req.query);
-    const result = await AdminServices.getAllAdmin(req.query);
+    const filters = pick(req.query, [
+      "email",
+      "name",
+      "searchTerm",
+      "contactNumber",
+    ]);
+
+    const options = pick(req.query, ["page", "limit"]);
+    const result = await AdminServices.getAllAdmin(filters, options);
     res.status(200).json({
       success: true,
       message: "Admin are fetched successfully!",
