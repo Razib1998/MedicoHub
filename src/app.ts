@@ -1,7 +1,9 @@
 import express, { Request, Response, urlencoded } from "express";
 import cors from "cors";
-import { UserRoutes } from "./app/modules/User/user.route";
-import { AdminRoutes } from "./app/modules/Admin/admin.routes";
+
+import router from "./app/routes";
+import globalErrorHandler from "./app/middlewares/globalErrorHandler";
+import notFound from "./app/middlewares/notFound";
 
 const app = express();
 
@@ -19,6 +21,9 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-app.use("/api/v1/users", UserRoutes);
-app.use("/api/v1/admin", AdminRoutes);
+app.use("/api/v1", router);
+app.use(globalErrorHandler);
+
+app.use(notFound);
+
 export default app;
