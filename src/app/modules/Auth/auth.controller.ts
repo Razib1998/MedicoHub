@@ -23,6 +23,21 @@ const login = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const accessTokenGenerator = catchAsync(async (req: Request, res: Response) => {
+  const { refreshToken } = req.cookies;
+  const result = await AuthServices.accessTokenGenerate(refreshToken);
+  sendResponse(res, {
+    statusCode: HttpStatus.OK,
+    success: true,
+    message: "Logged in Successfully!",
+    data: {
+      accessToken: result.accessToken,
+      needsPasswordChanged: result.needsPasswordChanged,
+    },
+  });
+});
+
 export const AuthControllers = {
   login,
+  accessTokenGenerator,
 };

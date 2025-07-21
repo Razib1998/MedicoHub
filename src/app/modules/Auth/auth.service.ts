@@ -1,6 +1,8 @@
+import { tokenGenerator } from "../../Shared/jwtTokenGenerator";
 import prisma from "../../Shared/prisma";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload, Secret } from "jsonwebtoken";
+import config from "../../config";
 
 const loginUser = async (payload: { email: string; password: string }) => {
   const isUserExists = await prisma.user.findUniqueOrThrow({
@@ -18,22 +20,22 @@ const loginUser = async (payload: { email: string; password: string }) => {
     throw new Error("Invalid Password");
   }
 
-  const accessToken = await jwt.sign(
+  const accessToken = tokenGenerator(
     {
       email: isUserExists?.email,
       role: isUserExists?.role,
     },
-    "secret",
-    { algorithm: "HS256", expiresIn: "10m" }
+    config.jwt.jwt_access_secret as string,
+    config.jwt.jwt_access_expiration as string
   );
 
-  const refreshToken = await jwt.sign(
+  const refreshToken = tokenGenerator(
     {
       email: isUserExists?.email,
       role: isUserExists?.role,
     },
-    "secretRefresh",
-    { algorithm: "HS256", expiresIn: "10d" }
+    config.jwt.jwt_refresh_secret as string,
+    config.jwt.jwt_refresh_expiration as string
   );
 
   return {
@@ -43,6 +45,35 @@ const loginUser = async (payload: { email: string; password: string }) => {
   };
 };
 
+const accessTokenGenerate = async (token: string) => {
+  let decodedData;
+  try {
+    decodedData = jwt.verify(token, "secretRefresh") as JwtPayload;
+  } catch (err) {
+    throw new Error("you are not authorized..!");
+  }
+  const isUserExists = await prisma.user.findUnique({
+    where: {
+      email: decodedData?.email,
+    },
+  });
+  const accessToken = tokenGenerator(
+    {
+      email: isUserExists?.email,
+      role: isUserExists?.role,
+    },
+    "secret",
+    "20m"
+  );
+
+  return {
+    isUserExists,
+    accessToken,
+    needsPasswordChanged: isUserExists?.needsPasswordChanged,
+  };
+};
+
 export const AuthServices = {
   loginUser,
+  accessTokenGenerate,
 };

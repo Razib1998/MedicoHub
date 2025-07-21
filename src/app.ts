@@ -4,12 +4,12 @@ import cors from "cors";
 import router from "./app/routes";
 import globalErrorHandler from "./app/middlewares/globalErrorHandler";
 import notFound from "./app/middlewares/notFound";
-import { HttpStatus } from "http-status-ts";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
-const port = 3000;
 app.use(cors());
+app.use(cookieParser());
 
 // Parsers
 
