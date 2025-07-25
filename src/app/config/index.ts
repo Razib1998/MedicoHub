@@ -12,4 +12,13 @@ export default {
     jwt_access_expiration: process.env.JWT_ACCESS_EXPIRATION,
     jwt_refresh_expiration: process.env.JWT_REFRESH_EXPIRATION,
   },
+  reset_pass: {
+    reset_pass_token: process.env.RESET_PASS_TOKEN,
+    reset_pass_expire_in: process.env.RESET_PASS_EXPIRATION,
+    reset_pass_link: process.env.RESET_PASS_LINK,
+  },
+  email: {
+    email: process.env.EMAIL,
+    app_pass: process.env.APP_PASS,
+  },
 };
