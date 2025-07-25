@@ -3,6 +3,7 @@ import prisma from "../../Shared/prisma";
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import config from "../../config";
+import { UserStatus } from "@prisma/client";
 
 const loginUser = async (payload: { email: string; password: string }) => {
   const isUserExists = await prisma.user.findUniqueOrThrow({
@@ -11,7 +12,7 @@ const loginUser = async (payload: { email: string; password: string }) => {
     },
   });
 
-  const isPasswordMatched = await bcrypt.compare(
+  const isPasswordMatched: boolean = await bcrypt.compare(
     payload.password,
     isUserExists?.password
   );
@@ -48,7 +49,10 @@ const loginUser = async (payload: { email: string; password: string }) => {
 const accessTokenGenerate = async (token: string) => {
   let decodedData;
   try {
-    decodedData = jwt.verify(token, "secretRefresh") as JwtPayload;
+    decodedData = jwt.verify(
+      token,
+      config.jwt.jwt_refresh_secret as string
+    ) as JwtPayload;
   } catch (err) {
     throw new Error("you are not authorized..!");
   }
@@ -62,8 +66,8 @@ const accessTokenGenerate = async (token: string) => {
       email: isUserExists?.email,
       role: isUserExists?.role,
     },
-    "secret",
-    "20m"
+    config.jwt.jwt_access_secret as string,
+    config.jwt.jwt_access_expiration as string
   );
 
   return {
@@ -72,8 +76,39 @@ const accessTokenGenerate = async (token: string) => {
     needsPasswordChanged: isUserExists?.needsPasswordChanged,
   };
 };
+const changePassword = async (userData: any, payload: any) => {
+  const isUserExists = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: userData?.email,
+      status: UserStatus.ACTIVE,
+    },
+  });
 
+  const isPasswordMatched = await bcrypt.compare(
+    payload.oldPassword,
+    isUserExists?.password
+  );
+
+  if (!isPasswordMatched) {
+    throw new Error("Password did not matched");
+  }
+  const hashPassword = await bcrypt.hash(payload?.newPassword, 12);
+  console.log(hashPassword);
+  await prisma.user.update({
+    where: {
+      email: isUserExists.email,
+    },
+    data: {
+      password: hashPassword,
+      needsPasswordChanged: false,
+    },
+  });
+  return {
+    message: "Password Change Successfully",
+  };
+};
 export const AuthServices = {
   loginUser,
   accessTokenGenerate,
+  changePassword,
 };

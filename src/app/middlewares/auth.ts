@@ -5,7 +5,11 @@ import ApiError from "../Errors/ApiError";
 import { HttpStatus } from "http-status-ts";
 
 const auth = (...roles: string[]) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (
+    req: Request & { user?: any },
+    res: Response,
+    next: NextFunction
+  ) => {
     try {
       const token = req.headers.authorization;
       if (!token) {
@@ -16,6 +20,7 @@ const auth = (...roles: string[]) => {
         config.jwt.jwt_access_secret as string
       );
 
+      req.user = verifiedUser;
       if (roles.length && !roles.includes(verifiedUser.role)) {
         throw new ApiError(
           HttpStatus.FORBIDDEN,
