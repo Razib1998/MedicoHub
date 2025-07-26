@@ -9,7 +9,7 @@ const createAdminIntoDB = async (
   next: NextFunction
 ) => {
   try {
-    const result = await UserServices.createAdmin(req.body);
+    const result = await UserServices.createAdmin(req.body, req.file);
     sendResponse(res, {
       statusCode: HttpStatus.OK,
       success: true,
