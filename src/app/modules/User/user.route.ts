@@ -4,8 +4,15 @@ import { userControllers } from "./user.controller";
 import auth from "../../middlewares/auth";
 import { multerUpload } from "../../config/multer.config";
 import { userValidation } from "./userValidation";
+import { UserRole } from "@prisma/client";
 
 const router = express.Router();
+
+router.get(
+  "/",
+  auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+  userControllers.getAllUserFromDB
+);
 
 router.post(
   "/create-admin",
@@ -33,5 +40,7 @@ router.post(
     return userControllers.createPatientIntoDB(req, res, next);
   }
 );
+
+router.patch("/:id/status", userControllers.UpdateUserStatus);
 
 export const UserRoutes = router;
