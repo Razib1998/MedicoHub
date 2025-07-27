@@ -16,5 +16,22 @@ router.post(
     return userControllers.createAdminIntoDB(req, res, next);
   }
 );
+router.post(
+  "/create-doctor",
+  auth("ADMIN", "SUPER_ADMIN"),
+  multerUpload.single("file"),
+  (req: Request, res: Response, next: NextFunction) => {
+    req.body = userValidation.createDoctor.parse(JSON.parse(req.body.data));
+    return userControllers.createDoctorIntoDB(req, res, next);
+  }
+);
+router.post(
+  "/create-patient",
+  multerUpload.single("file"),
+  (req: Request, res: Response, next: NextFunction) => {
+    req.body = userValidation.createPatient.parse(JSON.parse(req.body.data));
+    return userControllers.createPatientIntoDB(req, res, next);
+  }
+);
 
 export const UserRoutes = router;
