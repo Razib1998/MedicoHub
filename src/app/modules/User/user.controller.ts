@@ -5,6 +5,7 @@ import { HttpStatus } from "http-status-ts";
 import pick from "../../Shared/pick";
 import { userFilterableFields } from "./user.constant";
 import catchAsync from "../../Shared/catchAsync";
+import { TUser } from "../../utils/interface";
 
 const createAdminIntoDB = async (
   req: Request,
@@ -84,6 +85,31 @@ const UpdateUserStatus = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const getMyProfile = catchAsync(
+  async (req: Request & { user?: TUser }, res: Response) => {
+    const user = req.user;
+    const result = await UserServices.getMe(user as TUser);
+
+    sendResponse(res, {
+      statusCode: HttpStatus.OK,
+      success: true,
+      message: "My Profile fetch successfully!",
+      data: result,
+    });
+  }
+);
+const updateProfileInfo = catchAsync(
+  async (req: Request & { user?: TUser }, res: Response) => {
+    const user = req.user;
+    const result = await UserServices.updateProfileInfo(user as TUser, req);
+    sendResponse(res, {
+      statusCode: HttpStatus.OK,
+      success: true,
+      message: "Profile Info Updated successfully!",
+      data: result,
+    });
+  }
+);
 
 export const userControllers = {
   createAdminIntoDB,
@@ -91,4 +117,6 @@ export const userControllers = {
   createPatientIntoDB,
   getAllUserFromDB,
   UpdateUserStatus,
+  getMyProfile,
+  updateProfileInfo,
 };
