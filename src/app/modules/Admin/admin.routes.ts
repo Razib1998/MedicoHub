@@ -28,7 +28,7 @@ router.delete(
   auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   AdminControllers.deletedAdminFromDB
 );
-router.delete(
+router.patch(
   "/softDelete/:id",
   auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   AdminControllers.adminSoftDeleteFromDB
