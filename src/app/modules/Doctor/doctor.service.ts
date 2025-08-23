@@ -3,65 +3,90 @@ import { adminSearchableFields } from "../Admin/admin.constant";
 import { doctorSearchableFields } from "./doctor.constant";
 import { paginationHelper } from "../../Shared/paginationHelper";
 import prisma from "../../Shared/prisma";
-import { promises } from "dns";
 
-const getAllDoctor = async (params: any, options: any) => {
-  const { searchTerm, ...filterData } = params;
-  const { page, limit, skip } = paginationHelper.calculatePagination(options);
-  const andCondition: Prisma.DoctorWhereInput[] = [];
+const getAllDoctor = async (filters: any, options: any) => {
+  const { limit, page, skip } = paginationHelper.calculatePagination(options);
+  const { searchTerm, specialties, ...filterData } = filters;
 
-  if (params?.searchTerm) {
-    andCondition.push({
+  const andConditions: Prisma.DoctorWhereInput[] = [];
+
+  if (searchTerm) {
+    andConditions.push({
       OR: doctorSearchableFields.map((field) => ({
         [field]: {
-          contains: params?.searchTerm,
+          contains: searchTerm,
           mode: "insensitive",
         },
       })),
     });
   }
 
-  //   Search using specific Field
+  // doctor > doctorSpecialties > specialties -> title
 
-  if (Object.keys(filterData).length > 0) {
-    andCondition.push({
-      AND: Object.keys(filterData).map((key) => ({
-        [key]: {
-          equals: (filterData as any)[key],
+  if (specialties && specialties.length > 0) {
+    andConditions.push({
+      doctorSpecialties: {
+        some: {
+          specialties: {
+            title: {
+              contains: specialties,
+              mode: "insensitive",
+            },
+          },
         },
-      })),
+      },
     });
   }
 
-  andCondition.push({
+  if (Object.keys(filterData).length > 0) {
+    const filterConditions = Object.keys(filterData).map((key) => ({
+      [key]: {
+        equals: (filterData as any)[key],
+      },
+    }));
+    andConditions.push(...filterConditions);
+  }
+
+  andConditions.push({
     isDeleted: false,
   });
 
-  const whereConditions: Prisma.DoctorWhereInput = { AND: andCondition };
-  const result = await prisma.doctor.findMany({
+  const whereConditions: Prisma.DoctorWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
+
+  const total = await prisma.doctor.count({
+    where: whereConditions,
+  });
+
+  const doctors = await prisma.doctor.findMany({
     where: whereConditions,
     skip,
     take: limit,
     orderBy:
       options.sortBy && options.sortOrder
-        ? {
-            [options.sortBy]: options.sortOrder,
-          }
-        : {
-            createdAt: "desc",
-          },
+        ? { [options.sortBy]: options.sortOrder }
+        : { averageRating: "desc" },
+    include: {
+      doctorSpecialties: {
+        include: {
+          specialties: true,
+        },
+      },
+      // review: {
+      //   select: {
+      //     rating: true,
+      //   },
+      // },
+    },
   });
 
-  const total = await prisma.doctor.count({
-    where: whereConditions,
-  });
   return {
     meta: {
+      total,
       page,
       limit,
-      total,
     },
-    data: result,
+    data: doctors,
   };
 };
 
@@ -114,8 +139,8 @@ const updatedDoctorData = async (id: string, payload: any) => {
     if (specialties && specialties.length > 0) {
       // Delete specialties in one query
       const deleteSpecialtiesIds = specialties
-        .filter((s) => s.isDeleted)
-        .map((s) => s.specialtiesId);
+        .filter((s: any) => s.isDeleted)
+        .map((s: any) => s.specialtiesId);
 
       if (deleteSpecialtiesIds.length > 0) {
         await transitionClient.doctorSpecialties.deleteMany({
@@ -127,11 +152,11 @@ const updatedDoctorData = async (id: string, payload: any) => {
       }
 
       // Create specialties in one query
-      const createSpecialties = specialties.filter((s) => !s.isDeleted);
+      const createSpecialties = specialties.filter((s: any) => !s.isDeleted);
 
       if (createSpecialties.length > 0) {
         await transitionClient.doctorSpecialties.createMany({
-          data: createSpecialties.map((s) => ({
+          data: createSpecialties.map((s: any) => ({
             doctorId: doctorInfo.id,
             specialtiesId: s.specialtiesId,
           })),
