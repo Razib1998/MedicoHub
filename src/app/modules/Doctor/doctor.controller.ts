@@ -44,13 +44,24 @@ const deletedDoctorFromDB: RequestHandler = catchAsync(async (req, res) => {
     data: result,
   });
 });
-const doctorSoftDeleteFromDB: RequestHandler = catchAsync(async (req, res) => {
+// const doctorSoftDeleteFromDB: RequestHandler = catchAsync(async (req, res) => {
+//   const { id } = req.params;
+//   const result = await DoctorServices.softDeleteDoctor(id);
+//   sendResponse(res, {
+//     statusCode: HttpStatus.OK,
+//     success: true,
+//     message: "Doctor is deleted successfully!",
+//     data: result,
+//   });
+// });
+
+const updateDoctorData: RequestHandler = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const result = await DoctorServices.softDeleteDoctor(id);
+  const result = await DoctorServices.updatedDoctorData(id, req.body);
   sendResponse(res, {
     statusCode: HttpStatus.OK,
     success: true,
-    message: "Doctor is deleted successfully!",
+    message: "Doctor data updated successfully!",
     data: result,
   });
 });
@@ -59,5 +70,5 @@ export const DoctorControllers = {
   getAllDoctorFromDB,
   getSingleDoctorFromDB,
   deletedDoctorFromDB,
-  doctorSoftDeleteFromDB,
+  updateDoctorData,
 };
