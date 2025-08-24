@@ -2,8 +2,13 @@ import { Patient, Prisma } from "@prisma/client";
 import { paginationHelper } from "../../Shared/paginationHelper";
 import prisma from "../../Shared/prisma";
 import { patientSearchableFields } from "./patient.constant";
+import { IPatientFilterRequest, TPatientUpdateData } from "./patient.type";
+import { IPaginationOptions } from "../../Interface/pagination";
 
-const getAllPatient = async (filters: any, options: any) => {
+const getAllPatient = async (
+  filters: IPatientFilterRequest,
+  options: IPaginationOptions
+) => {
   const { limit, page, skip } = paginationHelper.calculatePagination(options);
   const { searchTerm, ...filterData } = filters;
 
@@ -72,7 +77,10 @@ const getSinglePatient = async (id: string): Promise<Patient | null> => {
   return result;
 };
 
-const updatePatientData = async (id: string, payload: any) => {
+const updatePatientData = async (
+  id: string,
+  payload: Partial<TPatientUpdateData>
+): Promise<Patient | null> => {
   const { patientHealthData, medicalReport, ...patientData } = payload;
   console.log(patientHealthData, medicalReport);
   const isPatientExists = await prisma.patient.findUniqueOrThrow({
